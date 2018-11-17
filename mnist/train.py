@@ -88,13 +88,34 @@ deltaBw = np.zeros((neuronOutput), dtype=np.float64)
 deltinhaV = np.zeros((neuronHidden), dtype=np.float64)
 deltaBv = np.zeros((neuronHidden), dtype=np.float64)
 
-grafico = [[],[]]
-c=0
+def salvar():
+    global V, W, Bv, Bw
 
-for row in range(len(data)):
+    # Salvando o modelo
+    f = open('model/model.csv','wt')
+    try:
+        w = csv.writer(f)
+        for i in range(neuronInput):
+            w.writerow(V[i])
+
+        for i in range(neuronHidden):
+            w.writerow(W[i])
+
+        w.writerow(Bv)
+        w.writerow(Bw)
+
+        w = None
+
+        print("######################### MODELO SALVO COM SUCESSO!")
+        print(str(datetime.now())[0:19])
+
+    finally:
+        f.close()
+
+c = 0
+
+for row in range(60000):
     number = int(data[row][0])
-    ciclo = ciclo +1
-    EqTotal = 0
 
     for pixel in range(n):
 
@@ -156,25 +177,46 @@ for row in range(len(data)):
 
         EqTotal = EqTotal + 0.5*((t[number]-Y)**2)
 
-        print("Img: {}\nPixel: {}\n".format(row,pixel+1))
+        print("Img: {}/60000\nConclusão: {}%\nPixel: {}\n".format(row,round((row/600),2),pixel+1))
+
+    if row+1 % 1000 == 0:
+        salvar()
+
+    if row+1 % 100 == 0:
+        comp = int(test[c][0])
+
+        media = np.zeros((neuronOutput),dtype=np.float64)
+        for pixel in range(n):
+            Xpad = int(test[c][pixel+1])/255
+
+            for i in range(neuronHidden):
+                ac = 0
+                for j in range(neuronInput):
+                    ac = ac + V[j][i] * Xpad
+                Zin[i] =  ac + Bv[i]
+                Z[i] = sigmoid(Zin[i])
+
+            for i in range(neuronOutput):
+                ac = 0
+                for j in range(neuronHidden):
+                    ac = ac + Z[j] * W[j][i]
+                Yin[i] = ac + Bw[i]
+                Y[i] = sigmoid(Yin[i])
+
+            for i in range(10):
+                if pixel != 0:
+                    media[i] = (media[i] + Y[i])*0.5
+                else:
+                    media = Y
+
+        for i in range(10):
+            print("{}   {}".format(t[comp][i],media[i]))
+
+        c += 1
+
+        
 
 print("\n")
-
-# Salvando o modelo
-f = open('model/model.csv','wt')
-try:
-    w = csv.writer(f)
-    for i in range(neuronInput):
-        w.writerow(V[i])
-
-    for i in range(neuronHidden):
-        w.writerow(W[i])
-
-    w.writerow(Bv)
-    w.writerow(Bw)
-
-finally:
-    f.close()
 
 end = str(datetime.now())[0:19]
 
