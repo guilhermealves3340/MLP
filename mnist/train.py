@@ -3,6 +3,8 @@ from datetime import datetime
 import numpy as np
 
 
+start = str(datetime.now())[0:19]
+
 def sigmoid(x):
     return 1.0/(1.0 + np.exp(-x))
 
@@ -64,55 +66,27 @@ n = 784        # 28x28 PIXELS
 
 # Inicialização dos pesos
 # Pesos das conecções
-V = np.zeros((neuronInput, neuronHidden), dtype=np.float64)
-for i in range(neuronInput):
-    for j in range(neuronHidden):
-        V[i][j] = np.random.uniform(-0.5,0.5)
-
-W = np.zeros((neuronHidden, neuronOutput), dtype=np.float64)
-for i in range(neuronHidden):
-    for j in range(neuronOutput):
-        W[i][j] = np.random.uniform(-0.5,0.5)
+V = (np.random.rand(neuronInput,neuronHidden)) -0.5
+W = (np.random.rand(neuronHidden,neuronOutput)) -0.5
 
 # Pesos das bias
-Bv = []
-
-for i in range(neuronHidden):
-    Bv.append(np.random.uniform(-0.5,0.5))
-
-Bw = []
-for i in range(neuronOutput):
-    Bw.append(np.random.uniform(-0.5,0.5))
+Bv = (np.random.rand(neuronHidden)) -0.5
+Bw = (np.random.rand(neuronOutput)) -0.5
 
 # Valores dos neuronios das camadas intermediarias
-Zin = []
-Z = []
-for i in range(neuronHidden):
-    Zin.append(0)
-    Z.append(0)
-
-# Valores dos neuronios das camadas de entrada
-Yin = []
-Y = []
-for i in range(neuronOutput):
-    Yin.append(0)
-    Y.append(0)
+Zin = np.zeros((neuronHidden),dtype=np.float64)
+Z = np.zeros((neuronHidden),dtype=np.float64)
+Yin = np.zeros((neuronOutput),dtype=np.float64)
+Y = np.zeros((neuronOutput),dtype=np.float64)
 
 deltaV = np.zeros((neuronInput, neuronHidden), dtype=np.float64)
 deltaW = np.zeros((neuronHidden, neuronOutput), dtype=np.float64)
 
-deltinhaW = []
-deltaBw = []
-for i in range(neuronOutput):
-    deltinhaW.append(0)
+deltinhaW = np.zeros((neuronOutput), dtype=np.float64)
+deltaBw = np.zeros((neuronOutput), dtype=np.float64)
 
-    deltaBw.append(0)
-
-deltinhaV = []
-deltaBv = []
-for i in range(neuronHidden):
-    deltaBv.append(0)
-    deltinhaV.append(0)
+deltinhaV = np.zeros((neuronHidden), dtype=np.float64)
+deltaBv = np.zeros((neuronHidden), dtype=np.float64)
 
 grafico = [[],[]]
 c=0
@@ -122,118 +96,69 @@ for row in range(len(data)):
     ciclo = ciclo +1
     EqTotal = 0
 
+    for pixel in range(n):
 
-    if data[row][0] == '0':
-        c+=1
+        Xpad = int(data[row][pixel+1])/255
 
-        for pixel in range(n):
+        for i in range(neuronHidden):
+            ac = 0
+            for j in range(neuronInput):
+                ac = ac + V[j][i] * Xpad
 
-            Xpad = int(data[row][pixel+1])/255
+            Zin[i] = ac + Bv[i]
+            Z[i] = sigmoid(Zin[i])
 
+        for i in range(neuronOutput):
+            ac = 0
+            for j in range(neuronHidden):
+                ac = ac + Z[j] * W[j][i]
 
-            for i in range(neuronHidden):
-                ac = 0
-                for j in range(neuronInput):
-                    ac = ac + V[j][i] * Xpad
+            Yin[i] = ac + Bw[i]
+            Y[i] = sigmoid(Yin[i])
 
-                Zin[i] = ac + Bv[i]
-                Z[i] = sigmoid(Zin[i])
+        # Fase da retropropagação do erro
+        # da saida para a camada escondida
 
-            for i in range(neuronOutput):
-                ac = 0
-                for j in range(neuronHidden):
-                    ac = ac + Z[j] * W[j][i]
+        deltinhaW = (t[number] - Y) * (Y * (1 - Y))
 
-                Yin[i] = ac + Bw[i]
-                Y[i] = sigmoid(Yin[i])
+        for i in range(neuronHidden):
+            for j in range(neuronOutput):
+                deltaW[i][j] = alfa * deltinhaW[j]*Z[i]
 
-            # Fase da retropropagação do erro
-            # da saida para a camada escondida
-            for i in range(neuronOutput):
-                deltinhaW[i] = (t[number][i]-Y[i])*(Y[i]*(1-Y[i]))
+        deltaBw = alfa * deltinhaW
 
-            for i in range(neuronHidden):
-                for j in range(neuronOutput):
-                    deltaW[i][j] = alfa * deltinhaW[j]*Z[i]
+        # Da camada escondida para a camada de entrada
+        for i in range(neuronHidden):
+            for j in range(neuronOutput):
+                deltinhaV[i] = deltinhaW[j]*W[i][j]*(Z[i]*(1-Z[i]))
 
-            for i in range(neuronOutput):
-                deltaBw[i] = alfa * deltinhaW[i]
+        for i in range(neuronInput):
+            for k in range(neuronHidden):
+                deltaV[i][k] = alfa*deltinhaV[k]*Xpad
 
-            # Da camada escondida para a camada de entrada
-            for i in range(neuronHidden):
-                for j in range(neuronOutput):
-                    deltinhaV[i] = deltinhaW[j]*W[i][j]*(Z[i]*(1-Z[i]))
+        deltaBv = alfa*deltinhaV
 
-            for i in range(neuronInput):
-                for k in range(neuronHidden):
-                    deltaV[i][k] = alfa*deltinhaV[k]*Xpad
+        # Atualização dos pesos
+        # Da camada de saida
 
-            for i in range(neuronHidden):
-                deltaBv[i] = alfa*deltinhaV[i]
+        for i in range(neuronHidden):
+            for k in range(neuronOutput):
+                W[i][k] = W[i][k]+deltaW[i][k]
 
-            # Atualização dos pesos
-            # Da camada de saida
+        Bw = Bw + deltaBw
 
-            for i in range(neuronHidden):
-                for k in range(neuronOutput):
-                    W[i][k] = W[i][k]+deltaW[i][k]
+        # Camada escondida
+        for i in range(neuronInput):
+            for j in range(neuronHidden):
+                V[i][j] = V[i][j] + deltaV[i][j]
 
-            for i in range(neuronOutput):
-                Bw[i] = Bw[i] + deltaBw[i]
+        Bv = Bv + deltaBv
 
-            # Camada escondida
-            for i in range(neuronInput):
-                for j in range(neuronHidden):
-                    V[i][j] = V[i][j] + deltaV[i][j]
+        EqTotal = EqTotal + 0.5*((t[number]-Y)**2)
 
-            for i in range(neuronHidden):
-                Bv[i] = Bv[i] + deltaBv[i]
-
-            for i in range(neuronOutput):
-                EqTotal = EqTotal + 0.5*((t[number][i]-Y[i])**2)
-
-            print("Img: {}\nPixel: {}\n".format(c,pixel+1))
-
-    print("ERRO QUADRATICO TOTAL: {}\nCICLOS: {}\n".format(EqTotal,ciclo))
-    
-
+        print("Img: {}\nPixel: {}\n".format(row,pixel+1))
 
 print("\n")
-
-#row = 0
-#media = []
-#for i in range(10):
-#    media.append(0)
-#while test[row][0] != '0':
-#    row += 1
-#for pixel in range(n):
-#
-#    Xpad = test[row][pixel+1]
-#
-#    for i in range(neuronHidden):
-#        ac = 0
-#        for j in range(neuronInput):
-#            ac = ac + V[j][i] * Xpad
-#
-#        Zin[i] = ac + Bv[i]
-#        Z[i] = sigmoid(Zin[i])
-#
-#    for i in range(neuronOutput):
-#        ac = 0
-#        for j in range(neuronHidden):
-#            ac = ac + Z[j] * W[j][i]
-#
-#        Yin[i] = ac + Bw[i]
-#        Y[i] = sigmoid(Yin[i])
-#
-#    for i in range(10):
-#        if pixel != 0:
-#            media[i] = (media[i] + Y[i])*0.5
-#        else:
-#            media = Y
-#
-#for i in range(10):
-#    print("{}   {}".format(t[0][i],media[i]))
 
 # Salvando o modelo
 f = open('model/model.csv','wt')
@@ -245,5 +170,12 @@ try:
     for i in range(neuronHidden):
         w.writerow(W[i])
 
+    w.writerow(Bv)
+    w.writerow(Bw)
+
 finally:
     f.close()
+
+end = str(datetime.now())[0:19]
+
+print("\nINICIO:     {}\nFIM:        {}".format(start,end))
