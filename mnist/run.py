@@ -63,28 +63,26 @@ try:
 finally:
     f.close()
     f = None
-
+K = 0
 for i in range(neuronInput):
     for j in range(neuronHidden):
         V[i][j] = float(data[i][j])
 
-k = len(V)
+K = neuronInput + K
 for i in range(neuronHidden):
     for j in range(neuronOutput):
-        W[i][j] = float(data[i+k][j])
+        W[i][j] = float(data[i+K][j])
 
-k = k + neuronHidden
 for i in range(neuronHidden):
-    Bv[i] = float(data[i+k])
+    Bv[i] = float(data[796][i])
 
-k = k + neuronOutput
 for i in range(neuronOutput):
-    Bw[i] = float(data[i+k])
+    Bw[i] = float(data[797][i])
 
-C = 0
+c = 0
 for i in range(1000):
 
-    x = input("DIGITE QUALQUER COISA PRA TESTAR 10 DIGITOS")
+    x = input("DIGITE QUALQUER COISA PRA TESTAR 10 DIGITOS ")
     
     for i in range(10):
         comp = int(test[c][0])
@@ -107,7 +105,7 @@ for i in range(1000):
 
         dif = 0
         for i in range(10):
-            print("\n{}   {}\n".format(t[comp][i],Y[i]))
+            print("{}   {}".format(t[comp][i],Y[i]))
             dif = dif + ((t[comp][i]  - Y[i])**2)**0.5
         dif = dif/10
         dif = (1-dif)*100
