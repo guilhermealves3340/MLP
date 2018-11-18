@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 def sigmoid(x):
-    return 1.0/(1.0 + np.exp(-x))
+    return 1.0/(1.0 + np.exp(-5*x))
 
 # Target
 t0 = [1,0,0,0,0,0,0,0,0,0]
@@ -20,10 +20,10 @@ t9 = [0,0,0,0,0,0,0,0,0,1]
 t = [t0,t1,t2,t3,t4,t5,t6,t7,t8,t9]
 
 # Neuronios da camada de entrada
-neuronInput = 1
+neuronInput = 784
 
 # Neuronios da camada escondida
-neuronHidden = 15
+neuronHidden = 12
 
 # Neuronios da camada de saída
 neuronOutput = 10
@@ -35,11 +35,10 @@ try:
     reader = None
 finally:
     f.close()
+    f = None
 
 # Excluindo linha de labels da tabela
 test.pop(0)
-
-n = 784        # 28x28 PIXELS
 
 # Inicialização dos pesos
 # Pesos das conecções
@@ -56,8 +55,6 @@ Z = np.zeros((neuronHidden),dtype=np.float64)
 Yin = np.zeros((neuronOutput),dtype=np.float64)
 Y = np.zeros((neuronOutput),dtype=np.float64)
 
-print("\n")
-
 f = open('model/model.csv','rt')
 try:
     r = csv.reader(f)
@@ -65,53 +62,54 @@ try:
     r = None
 finally:
     f.close()
+    f = None
 
 for i in range(neuronInput):
     for j in range(neuronHidden):
         V[i][j] = float(data[i][j])
 
+k = len(V)
 for i in range(neuronHidden):
     for j in range(neuronOutput):
-        W[i][j] = float(data[i+len(V)][j])
+        W[i][j] = float(data[i+k][j])
 
-k = neuronInput + neuronHidden
+k = k + neuronHidden
 for i in range(neuronHidden):
     Bv[i] = float(data[i+k])
 
-k = k + neuronHidden
+k = k + neuronOutput
 for i in range(neuronOutput):
     Bw[i] = float(data[i+k])
 
-row = 0
-media = np.zeros((neuronOutput),dtype=np.float64)
-while test[row][0] != '0':
-    row += 1
-for pixel in range(n):
+C = 0
+for i in range(1000):
 
-
-    Xpad = int(test[row][pixel+1])/255
-
-    for i in range(neuronHidden):
-        ac = 0
-        for j in range(neuronInput):
-            ac = ac + V[j][i] * Xpad
-
-        Zin[i] = ac + Bv[i]
-        Z[i] = sigmoid(Zin[i])
-
-    for i in range(neuronOutput):
-        ac = 0
-        for j in range(neuronHidden):
-            ac = ac + Z[j] * W[j][i]
-
-        Yin[i] = ac + Bw[i]
-        Y[i] = sigmoid(Yin[i])
-
+    x = input("DIGITE QUALQUER COISA PRA TESTAR 10 DIGITOS")
+    
     for i in range(10):
-        if pixel != 0:
-            media[i] = (media[i] + Y[i])*0.5
-        else:
-            media = Y
+        comp = int(test[c][0])
 
-for i in range(10):
-    print("{}   {}".format(t[0][i],media[i]))
+        Xpad = test[c][1:785]
+
+        for i in range(neuronHidden):
+            ac = 0
+            for j in range(neuronInput):
+                ac = ac + V[j][i] * int(Xpad[j])/255
+            Zin[i] = ac + Bv[i]
+            Z[i] = sigmoid(Zin[i])
+
+        for i in range(neuronOutput):
+            ac = 0
+            for j in range(neuronHidden):
+                ac = ac + Z[j] * W[j][i]
+            Yin[i] = ac + Bw[i]
+            Y[i] = sigmoid(Yin[i])
+
+        dif = 0
+        for i in range(10):
+            print("\n{}   {}\n".format(t[comp][i],Y[i]))
+            dif = dif + ((t[comp][i]  - Y[i])**2)**0.5
+        dif = dif/10
+        dif = (1-dif)*100
+        print("Acc: {}%".format(dif))
+        c += 1
